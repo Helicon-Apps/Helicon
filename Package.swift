@@ -22,6 +22,9 @@ let package = Package(
             targets: ["HeliconFirebase"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "11.14.0")),
+    ],
     targets: [
         .target(
             name: "HeliconFoundation"
@@ -36,7 +39,9 @@ let package = Package(
         .target(
             name: "HeliconFirebase",
             dependencies: [
-                "HeliconFoundation"
+                "HeliconFoundation",
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
             ]
         )
     ]

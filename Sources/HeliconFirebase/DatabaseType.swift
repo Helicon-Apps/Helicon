@@ -8,7 +8,7 @@
 import Foundation
 import HeliconFoundation
 
-protocol DatabaseType: Identifiable, Codable, StandardStringConvertible {
+public protocol DatabaseType: Identifiable, Codable, StandardStringConvertible {
     var firestoreId: String? { get }
     var id: String { get }
     static var endpoint: String { get }
