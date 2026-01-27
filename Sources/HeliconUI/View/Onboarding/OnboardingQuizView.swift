@@ -105,6 +105,7 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & CaseIterable & Ti
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 24) {
+            
             Text(question.title)
                 .font(.largeTitle.bold())
             if let description = question.description {
@@ -253,13 +254,27 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & CaseIterable & Ti
     }
 }
 
-//#Preview {
-//    OnboardingQuizView(
-//        question: .init(title: "Pick your swing speed", description: "Tempo Town will recommend the best tempo for you.", options: SwingSpeedPreset.allCases),
-//        showSkipButton: true,
-//        hint: .init(text: "You can change this later in Settings"),
-//        preContinueAction: { _ in }
-//    )
-//        .preferredColorScheme(.dark)
-//}
+fileprivate enum QuizOptionExample: String, CaseIterable, Identifiable, TitleRepresentable {
+    case one
+    case two
+    case three
+    
+    var id: String { rawValue }
+    
+    var title: String { rawValue.capitalized }
+}
+
+#Preview {
+    OnboardingQuizView(
+        question: .init(
+            title: "Pick your swing speed",
+            description: "Tempo Town will recommend the best tempo for you.",
+            options: QuizOptionExample.allCases
+        ),
+        showSkipButton: true,
+        hint: .init(text: "You can change this later in Settings"),
+        preContinueAction: { _ in }
+    )
+    .preferredColorScheme(.dark)
+}
 
