@@ -15,7 +15,7 @@ import SwiftUI
 // Posted by Mirko, modified by community. See post 'Timeline' for change history
 // Retrieved 2025-12-06, License - CC BY-SA 4.0
 
-@MainActor extension UIApplication {
+@MainActor public extension UIApplication {
     var keyWindow: UIWindow? {
         connectedScenes.lazy
             .compactMap { ($0 as? UIWindowScene)?.keyWindow }
@@ -61,11 +61,11 @@ import SwiftUI
     }
 }
 
-extension EnvironmentValues {
+public extension EnvironmentValues {
     @Entry var safeAreaInsets: EdgeInsets = EdgeInsets()
 }
 
-extension UIEdgeInsets {
+public extension UIEdgeInsets {
     var edgeInsets: EdgeInsets {
         EdgeInsets(top: top, leading: left, bottom: bottom, trailing: right)
     }
