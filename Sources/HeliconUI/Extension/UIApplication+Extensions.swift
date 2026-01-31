@@ -16,13 +16,13 @@ import SwiftUI
 // Retrieved 2025-12-06, License - CC BY-SA 4.0
 
 @MainActor public extension UIApplication {
-    public var keyWindow: UIWindow? {
+    var keyWindow: UIWindow? {
         connectedScenes.lazy
             .compactMap { ($0 as? UIWindowScene)?.keyWindow }
             .first
     }
     
-    public var currentUIWindow: UIWindow? {
+    var currentUIWindow: UIWindow? {
         let connectedScenes = UIApplication.shared.connectedScenes
             .filter { $0.activationState == .foregroundActive }
             .compactMap { $0 as? UIWindowScene }
@@ -33,7 +33,7 @@ import SwiftUI
         return window
     }
     
-    public var rootViewController: UIViewController? {
+    var rootViewController: UIViewController? {
         let connectedScenes = UIApplication.shared.connectedScenes
             .filter { $0.activationState == .foregroundActive }
             .compactMap { $0 as? UIWindowScene }
@@ -42,7 +42,7 @@ import SwiftUI
         return rootViewController
     }
 
-    public func topViewController(of viewController: UIViewController? = nil) -> UIViewController? {
+    func topViewController(of viewController: UIViewController? = nil) -> UIViewController? {
         
         let viewController: UIViewController? = viewController ?? rootViewController
         
