@@ -36,8 +36,8 @@ public struct AppButton: View {
                 Spacer()
                 if let systemImage {
                     Image(systemName: systemImage)
-                    Text(title)
                 }
+                Text(title)
                 Spacer()
             }
             .frame(height: self.height)
