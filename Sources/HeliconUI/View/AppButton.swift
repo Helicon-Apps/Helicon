@@ -12,10 +12,16 @@ import SwiftUI
 public struct AppButton: View {
     
     let title: String
-    var systemImage: String? = nil
+    let systemImage: String?
     let action: () -> Void
     
     private let height: CGFloat = 42
+    
+    public init(title: String, systemImage: String? = nil, action: @escaping () -> Void) {
+        self.title = title
+        self.systemImage = systemImage
+        self.action = action
+    }
     
     public var body: some View {
         buttonBase
