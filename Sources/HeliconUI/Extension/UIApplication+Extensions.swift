@@ -60,14 +60,3 @@ import SwiftUI
         return viewController
     }
 }
-
-public extension EnvironmentValues {
-    @Entry var safeAreaInsets: EdgeInsets = EdgeInsets()
-}
-
-public extension UIEdgeInsets {
-    var edgeInsets: EdgeInsets {
-        EdgeInsets(top: top, leading: left, bottom: bottom, trailing: right)
-    }
-}
-
