@@ -8,6 +8,9 @@
 import SwiftUI
 
 public struct ProgressiveBlurView: View {
+    
+    public init() {}
+    
     public var body: some View {
         
         Rectangle()
