@@ -22,6 +22,13 @@ let package = Package(
             targets: ["HeliconFirebase"]
         ),
     ],
+    dependencies: [
+        .package(
+            url: "https://github.com/pointfreeco/swift-composable-architecture",
+            from: "1.5.0"
+        ),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "11.9.0")
+    ],
     targets: [
         .target(
             name: "HeliconFoundation"
@@ -36,7 +43,11 @@ let package = Package(
         .target(
             name: "HeliconFirebase",
             dependencies: [
-                "HeliconFoundation"
+                "HeliconFoundation",
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseCore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
             ]
         )
     ]
