@@ -14,18 +14,25 @@ public struct AppButton: View {
     let title: String
     let systemImage: String?
     let action: () -> Void
+    var isProminent: Bool
     
     private let height: CGFloat = 42
     
-    public init(title: String, systemImage: String? = nil, action: @escaping () -> Void) {
+    public init(title: String, systemImage: String? = nil, isProminent: Bool = true, action: @escaping () -> Void) {
         self.title = title
         self.systemImage = systemImage
         self.action = action
+        self.isProminent = isProminent
     }
     
     public var body: some View {
-        buttonBase
-            .glassOrBorderedProminent()
+        if isProminent {
+            buttonBase
+                .glassOrBorderedProminent()
+        } else {
+            buttonBase
+                .glassOrBordered()
+        }
     }
     
     private var buttonBase: some View {
