@@ -12,7 +12,7 @@ public struct SmoothScrollView: View {
     var edges: Edge.Set
     var content: () -> any View
     
-    init(
+    public init(
         marginHeight: CGFloat = 25,
         baseColor: Color = .white,
         edges: Edge.Set = [.top, .bottom],
