@@ -11,10 +11,12 @@ import SwiftUI
 @Observable
 public class AppRatingManager {
     
-    var disableInDebug: Bool = false
-    var customPromptPresented: Bool = false
+    private var disableInDebug: Bool
+    public var customPromptPresented: Bool = false
     
-    public init() {}
+    public init(disableInDebug: Bool = false) {
+        self.disableInDebug = disableInDebug
+    }
     
     private func passDebugCondition() -> Bool {
         if disableInDebug {
