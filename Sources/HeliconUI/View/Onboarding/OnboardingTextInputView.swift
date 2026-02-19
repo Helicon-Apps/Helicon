@@ -25,21 +25,42 @@ public struct OnboardingTextInputQuestion {
     }
 }
 
+public struct OnboardingTextInputTraits {
+    public var keyboardType: UIKeyboardType
+    public var autocapitalization: TextInputAutocapitalization?
+    public var autocorrectionDisabled: Bool
+
+    public init(
+        keyboardType: UIKeyboardType = .default,
+        autocapitalization: TextInputAutocapitalization? = .sentences,
+        autocorrectionDisabled: Bool = true
+    ) {
+        self.keyboardType = keyboardType
+        self.autocapitalization = autocapitalization
+        self.autocorrectionDisabled = autocorrectionDisabled
+    }
+}
+
 public struct OnboardingTextInputView: View {
 
     let backgroundColor: Color?
     let question: OnboardingTextInputQuestion
     let showSkipButton: Bool
+    let autoFocusOnAppear: Bool
+    let inputTraits: OnboardingTextInputTraits
     var hint: OnboardingQuizHint? = nil
     var preContinueAction: (@escaping () -> Void) -> ()
     var completion: ((String) -> Void)?
     var onTextChange: ((String) -> Void)?
     @State private var answer: String
+    @FocusState private var isTextFieldFocused: Bool
 
     public init(
         backgroundColor: Color? = nil,
         question: OnboardingTextInputQuestion,
         showSkipButton: Bool = false,
+        autoFocusOnAppear: Bool = true,
+        inputTraits: OnboardingTextInputTraits = .init(),
         hint: OnboardingQuizHint? = nil,
         preContinueAction: @escaping (@escaping () -> Void) -> (),
         onTextChange: ((String) -> Void)? = nil,
@@ -48,6 +69,8 @@ public struct OnboardingTextInputView: View {
         self.backgroundColor = backgroundColor
         self.question = question
         self.showSkipButton = showSkipButton
+        self.autoFocusOnAppear = autoFocusOnAppear
+        self.inputTraits = inputTraits
         self.hint = hint
         self.preContinueAction = preContinueAction
         self.onTextChange = onTextChange
@@ -77,6 +100,14 @@ public struct OnboardingTextInputView: View {
         }
         .onChange(of: answer) { _, newValue in
             onTextChange?(newValue)
+        }
+        .onAppear {
+            guard autoFocusOnAppear else {
+                return
+            }
+            DispatchQueue.main.async {
+                isTextFieldFocused = true
+            }
         }
         .toolbar(.hidden)
     }
@@ -111,9 +142,11 @@ public struct OnboardingTextInputView: View {
             .font(.largeTitle.weight(.regular))
             .multilineTextAlignment(.center)
             .lineLimit(1)
-            .textInputAutocapitalization(.sentences)
-            .autocorrectionDisabled()
+            .keyboardType(inputTraits.keyboardType)
+            .textInputAutocapitalization(inputTraits.autocapitalization)
+            .autocorrectionDisabled(inputTraits.autocorrectionDisabled)
             .submitLabel(.done)
+            .focused($isTextFieldFocused)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, minHeight: 72, alignment: .center)
     }
