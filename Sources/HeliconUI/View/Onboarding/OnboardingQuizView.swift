@@ -87,7 +87,10 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & CaseIterable & Ti
             ScrollView {
                 VStack(spacing: 0) {
                     Spacer().frame(height: .onboardingTopSpacerHeight)
-                    header
+                    VStack(alignment: .leading, spacing: 24) {
+                        header
+                        picker
+                    }
                     Spacer().frame(height: 220)
                 }
                 .padding(.horizontal)
@@ -108,39 +111,39 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & CaseIterable & Ti
             
             Text(question.title)
                 .font(.largeTitle.bold())
+                .frame(maxWidth: .infinity, alignment: .leading)
             if let description = question.description {
                 Text(description)
                     .opacity(Opacity.textQuiet)
-            }
-
-            CardPicker(
-                selection: $selection,
-                direction: .vertical,
-                options: question.options,
-                hideLabels: true
-            ) { option in
-                ZStack {
-                    Color.secondary.opacity(0.24)
-                    HStack {
-                        Spacer()
-                        Text(option.title)
-                            .foregroundStyle(Color.primary)
-                            .fontWeight(.semibold)
-                        Spacer()
-                    }
-                }
-                .frame(height: 56)
-            } onDoubleSelect: {
-                proceed()
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             
         }
         .font(.title3)
     }
     
-//    private var picker: some View {
-//
-//    }
+    private var picker: some View {
+        CardPicker(
+            selection: $selection,
+            direction: .vertical,
+            options: question.options,
+            hideLabels: true
+        ) { option in
+            ZStack {
+                Color.secondary.opacity(0.24)
+                HStack {
+                    Spacer()
+                    Text(option.title)
+                        .foregroundStyle(Color.primary)
+                        .fontWeight(.semibold)
+                    Spacer()
+                }
+            }
+            .frame(height: 56)
+        } onDoubleSelect: {
+            proceed()
+        }
+    }
     
     @ViewBuilder
     private var continueButton: some View {

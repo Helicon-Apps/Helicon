@@ -92,6 +92,7 @@ public struct OnboardingTextInputView: View {
             }
         }
         .font(.title3)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var textInputWrapper: some View {
@@ -238,8 +239,8 @@ public struct OnboardingTextInputView: View {
 #Preview {
     OnboardingTextInputView(
         question: .init(
-            title: "Describe your golf goal",
-            description: "Add a short note so Tempo Town can tailor recommendations for you.",
+            title: "Describe goal",
+            description: "Add a short note.",
             placeholder: "My goal"
         ),
         showSkipButton: false,
