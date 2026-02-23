@@ -41,6 +41,11 @@ public struct OnboardingTextInputTraits {
     }
 }
 
+public enum OnboardingTextInputValidationState: Equatable {
+    case valid
+    case invalid(message: String?)
+}
+
 public struct OnboardingTextInputView: View {
 
     let backgroundColor: Color?
@@ -48,11 +53,16 @@ public struct OnboardingTextInputView: View {
     let showSkipButton: Bool
     let autoFocusOnAppear: Bool
     let inputTraits: OnboardingTextInputTraits
+    let validator: ((String) -> OnboardingTextInputValidationState)?
+    let showsValidationMessage: Bool
     var hint: OnboardingQuizHint? = nil
     var preContinueAction: (@escaping () -> Void) -> ()
     var completion: ((String) -> Void)?
     var onTextChange: ((String) -> Void)?
+    var onValidationChange: ((OnboardingTextInputValidationState) -> Void)?
     @State private var answer: String
+    @State private var validationState: OnboardingTextInputValidationState
+    @State private var hasValidationAttempt: Bool
     @FocusState private var isTextFieldFocused: Bool
 
     public init(
@@ -61,6 +71,9 @@ public struct OnboardingTextInputView: View {
         showSkipButton: Bool = false,
         autoFocusOnAppear: Bool = true,
         inputTraits: OnboardingTextInputTraits = .init(),
+        validator: ((String) -> OnboardingTextInputValidationState)? = nil,
+        showsValidationMessage: Bool = true,
+        onValidationChange: ((OnboardingTextInputValidationState) -> Void)? = nil,
         hint: OnboardingQuizHint? = nil,
         preContinueAction: @escaping (@escaping () -> Void) -> (),
         onTextChange: ((String) -> Void)? = nil,
@@ -71,11 +84,16 @@ public struct OnboardingTextInputView: View {
         self.showSkipButton = showSkipButton
         self.autoFocusOnAppear = autoFocusOnAppear
         self.inputTraits = inputTraits
+        self.validator = validator
+        self.showsValidationMessage = showsValidationMessage
+        self.onValidationChange = onValidationChange
         self.hint = hint
         self.preContinueAction = preContinueAction
         self.onTextChange = onTextChange
         self.completion = completion
         self._answer = State(initialValue: question.defaultAnswer)
+        self._validationState = State(initialValue: .valid)
+        self._hasValidationAttempt = State(initialValue: false)
     }
 
     public var body: some View {
@@ -100,6 +118,12 @@ public struct OnboardingTextInputView: View {
         }
         .onChange(of: answer) { _, newValue in
             onTextChange?(newValue)
+            guard hasValidationAttempt else {
+                return
+            }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                hasValidationAttempt = false
+            }
         }
         .onAppear {
             guard autoFocusOnAppear else {
@@ -137,18 +161,30 @@ public struct OnboardingTextInputView: View {
     }
 
     private var textInput: some View {
-        TextField(question.placeholder, text: $answer)
-            .textFieldStyle(.plain)
-            .font(.largeTitle.weight(.regular))
-            .multilineTextAlignment(.center)
-            .lineLimit(1)
-            .keyboardType(inputTraits.keyboardType)
-            .textInputAutocapitalization(inputTraits.autocapitalization)
-            .autocorrectionDisabled(inputTraits.autocorrectionDisabled)
-            .submitLabel(.done)
-            .focused($isTextFieldFocused)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .center)
+        VStack(spacing: 8) {
+            TextField(question.placeholder, text: $answer)
+                .textFieldStyle(.plain)
+                .font(.largeTitle.weight(.regular))
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+                .keyboardType(inputTraits.keyboardType)
+                .textInputAutocapitalization(inputTraits.autocapitalization)
+                .autocorrectionDisabled(inputTraits.autocorrectionDisabled)
+                .submitLabel(.done)
+                .focused($isTextFieldFocused)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, minHeight: 72, alignment: .center)
+
+            if showsValidationMessage, let validationMessage {
+                Text(validationMessage)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: validationMessage)
     }
 
     @ViewBuilder
@@ -156,6 +192,7 @@ public struct OnboardingTextInputView: View {
         continueButtonBase
             .glassOrBorderedProminent()
             .opacityDisabled(!canProceed)
+            .disabled(!canProceed)
     }
 
     private var continueButtonBase: some View {
@@ -176,6 +213,7 @@ public struct OnboardingTextInputView: View {
         skipButtonBase
             .glassOrBordered()
             .opacityDisabled(!canProceed)
+            .disabled(!canProceed)
     }
 
     private var skipButtonBase: some View {
@@ -259,8 +297,49 @@ public struct OnboardingTextInputView: View {
         answer.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var validationMessage: String? {
+        guard hasValidationAttempt else {
+            return nil
+        }
+        guard case let .invalid(message) = validationState else {
+            return nil
+        }
+        guard let message, !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return message
+    }
+
+    private func resolveValidationState(for input: String) -> OnboardingTextInputValidationState {
+        Self.resolveValidationState(for: input, validator: validator)
+    }
+
+    private static func resolveValidationState(
+        for input: String,
+        validator: ((String) -> OnboardingTextInputValidationState)?
+    ) -> OnboardingTextInputValidationState {
+        guard let validator else {
+            return .valid
+        }
+        return validator(input)
+    }
+
     private func proceed() {
         guard canProceed else {
+            return
+        }
+        let nextValidationState = resolveValidationState(for: trimmedAnswer)
+        let didValidationStateChange = validationState != nextValidationState
+        withAnimation(.easeInOut(duration: 0.2)) {
+            hasValidationAttempt = true
+            if didValidationStateChange {
+                validationState = nextValidationState
+            }
+        }
+        if didValidationStateChange {
+            onValidationChange?(nextValidationState)
+        }
+        guard nextValidationState == .valid else {
             return
         }
         preContinueAction {
@@ -269,7 +348,7 @@ public struct OnboardingTextInputView: View {
     }
 }
 
-#Preview {
+#Preview("Default") {
     OnboardingTextInputView(
         question: .init(
             title: "Describe goal",
@@ -278,6 +357,31 @@ public struct OnboardingTextInputView: View {
         ),
         showSkipButton: false,
         hint: .init(text: "You can change this later in Settings"),
+        preContinueAction: { _ in }
+    )
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Validator") {
+    OnboardingTextInputView(
+        question: .init(
+            title: "Create username",
+            description: "Use lowercase letters, numbers, or underscores.",
+            placeholder: "@creator",
+            defaultAnswer: "no"
+        ),
+        inputTraits: .init(
+            keyboardType: .asciiCapable,
+            autocapitalization: .never,
+            autocorrectionDisabled: true
+        ),
+        validator: { input in
+            guard input.count >= 3 else {
+                return .invalid(message: "Use at least 3 characters.")
+            }
+            let isValid = input.allSatisfy { $0.isLetter || $0.isNumber || $0 == "_" }
+            return isValid ? .valid : .invalid(message: "Use only letters, numbers, or underscores.")
+        },
         preContinueAction: { _ in }
     )
     .preferredColorScheme(.dark)
