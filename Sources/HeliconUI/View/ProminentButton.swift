@@ -18,7 +18,7 @@ public struct ProminentButton: View {
     
     let action: () -> Void
     
-    init(
+    public init(
         _ title: String,
         systemImage: String? = nil,
         style: Style = .default,
@@ -103,7 +103,7 @@ public struct ProminentButton: View {
         }
     }
     
-    public enum Style: CaseIterable {
+    public enum Style: CaseIterable, Sendable {
         case primary
         case secondary
         
@@ -111,6 +111,8 @@ public struct ProminentButton: View {
         case glassPrimary
         @available(iOS 26.0, *)
         case glassSecondary
+        
+        
         
         public static var allCases: [Style] {
             if #available(iOS 26.0, *) {
@@ -120,13 +122,13 @@ public struct ProminentButton: View {
             }
         }
         
-        static var `default`: Self {
+        public static let `default`: Self = {
             if #available(iOS 26.0, *) {
                 return .glassPrimary
             } else {
                 return .primary
             }
-        }
+        }()
         
         var foregroundColor: Color {
             if #available(iOS 26.0, *) {
@@ -159,3 +161,4 @@ public struct ProminentButton: View {
         }
     }
 }
+
