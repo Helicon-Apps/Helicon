@@ -9,27 +9,32 @@ import Foundation
 import SwiftUI
 
 
-public struct AppButton: View {
+public struct ProminentButton: View {
+    
+    public enum Style {
+        case primary, secondary
+    }
     
     let title: String
     let systemImage: String?
     let action: () -> Void
-    var isProminent: Bool
+    var style: Style
     
     private let height: CGFloat = 42
     
-    public init(title: String, systemImage: String? = nil, isProminent: Bool = true, action: @escaping () -> Void) {
+    public init(title: String, systemImage: String? = nil, style: Style = .primary, action: @escaping () -> Void) {
         self.title = title
         self.systemImage = systemImage
         self.action = action
-        self.isProminent = isProminent
+        self.style = style
     }
     
     public var body: some View {
-        if isProminent {
+        switch style {
+        case .primary:
             buttonBase
                 .glassOrBorderedProminent()
-        } else {
+        case .secondary:
             buttonBase
                 .glassOrBordered()
         }

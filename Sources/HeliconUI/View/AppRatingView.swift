@@ -58,16 +58,16 @@ public struct AppRatingView: View {
 
                 // Actions
                 VStack(spacing: 12) {
-                    AppButton(
+                    ProminentButton(
                         title: "Rate us",
                         action: onRateNow
                     )
                     .frame(maxWidth: .infinity)
                     .fontWeight(.semibold)
 
-                    AppButton(
+                    ProminentButton(
                         title: "Maybe later",
-                        isProminent: false,
+                        style: .secondary,
                         action: onMaybeLater
                     )
                     .frame(maxWidth: .infinity)
