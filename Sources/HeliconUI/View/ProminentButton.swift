@@ -60,36 +60,22 @@ public struct ProminentButton: View {
     
     @ViewBuilder
     private var background: some View {
-        if #available(iOS 26.0, *) {
-            switch style {
-            case .primary:
-                Capsule()
-                    .fill(Color.accentColor)
-            case .secondary:
-                ZStack {
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                    Capsule()
-                        .stroke(
-                            Color.primary.opacity(0.12),
-                            lineWidth: 1
-                        )
-                }
-            case .glassPrimary:
+        switch style {
+        case .primary:
+            if #available(iOS 26.0, *) {
                 Capsule()
                     .fill(Color.accentColor.opacity(0.8))
                     .glassEffect(.regular)
-            case .glassSecondary:
+            } else {
+                Capsule()
+                    .fill(Color.accentColor)
+            }
+        case .secondary:
+            if #available(iOS 26.0, *) {
                 Capsule()
                     .fill(Color.white.opacity(0.5))
                     .glassEffect(.regular)
-            }
-        } else {
-            switch style {
-            case .primary, .glassPrimary:
-                Capsule()
-                    .fill(Color.accentColor)
-            case .secondary, .glassSecondary:
+            } else {
                 ZStack {
                     Capsule()
                         .fill(.ultraThinMaterial)
@@ -106,47 +92,17 @@ public struct ProminentButton: View {
     public enum Style: CaseIterable, Sendable {
         case primary
         case secondary
-        
-        @available(iOS 26.0, *)
-        case glassPrimary
-        @available(iOS 26.0, *)
-        case glassSecondary
-        
-        
-        
-        public static var allCases: [Style] {
-            if #available(iOS 26.0, *) {
-                return [.primary, .secondary, .glassPrimary, .glassSecondary]
-            } else {
-                return [.primary, .secondary]
-            }
-        }
-        
-        public static let `default`: Self = {
-            if #available(iOS 26.0, *) {
-                return .glassPrimary
-            } else {
-                return .primary
-            }
-        }()
+
+        public static let `default`: Self = .primary
         
         var foregroundColor: Color {
-            if #available(iOS 26.0, *) {
-                switch self {
-                case .primary:
-                    return .white
-                case .secondary:
-                    return .primary
-                case .glassPrimary:
-                    return .white
-                case .glassSecondary:
+            switch self {
+            case .primary:
+                return .white
+            case .secondary:
+                if #available(iOS 26.0, *) {
                     return .black
-                }
-            } else {
-                switch self {
-                case .primary, .glassPrimary:
-                    return .white
-                case .secondary, .glassSecondary:
+                } else {
                     return .primary
                 }
             }
@@ -162,3 +118,16 @@ public struct ProminentButton: View {
     }
 }
 
+#Preview("All Styles") {
+    VStack(spacing: 12) {
+        ForEach(ProminentButton.Style.allCases.indices, id: \.self) { index in
+            let style = ProminentButton.Style.allCases[index]
+            ProminentButton(
+                String(describing: style).capitalized,
+                systemImage: "star.fill",
+                style: style
+            ) {}
+        }
+    }
+    .padding()
+}
