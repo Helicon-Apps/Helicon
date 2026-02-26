@@ -69,10 +69,6 @@ public struct CardPicker<Content: View, T: Identifiable & Equatable & TitleRepre
     
     public var body: some View {
         picker
-//            .sensoryFeedback(
-//                sensoryFeedbackRequest.feedback,
-//                trigger: sensoryFeedbackRequest
-//            )
     }
     
     @ViewBuilder
@@ -96,12 +92,10 @@ public struct CardPicker<Content: View, T: Identifiable & Equatable & TitleRepre
                     withAnimation {
                         if selection == option {
                             if let onDoubleSelect {
-//                                provideSensoryFeedback(.success)
                                 onDoubleSelect()
                             }
                         } else {
                             selection = option
-//                            provideSensoryFeedback(.selection)
                         }
                     }
                 }
@@ -158,11 +152,6 @@ public struct CardPicker<Content: View, T: Identifiable & Equatable & TitleRepre
     }
 }
 
-//extension CardPicker {
-//    private func provideSensoryFeedback(_ feedback: SensoryFeedback) {
-//        self.sensoryFeedbackRequest = .init(feedback)
-//    }
-//}
 
 public enum CardPickerStackDirection: Sendable {
     case vertical
