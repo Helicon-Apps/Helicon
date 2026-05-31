@@ -7,19 +7,22 @@
 import SwiftUI
 import HeliconFoundation
 
-public struct OnboardingQuizQuestion<T: Identifiable & Equatable & TitleRepresentable> {
+public struct OnboardingQuizQuestion<T: Identifiable & Equatable & CaseIterable & TitleRepresentable> {
     public let title: String
     public var description: String?
     public let options: [T]
+    public var defaultAnswer: T = .allCases.first!
 
     public init(
         title: String,
         description: String? = nil,
-        options: [T]
+        options: [T],
+        defaultAnswer: T = .allCases.first!
     ) {
         self.title = title
         self.description = description
         self.options = options
+        self.defaultAnswer = defaultAnswer
     }
 }
 
@@ -43,75 +46,40 @@ fileprivate extension CGFloat {
     static let onboardingTopSpacerHeight: Self = 32
 }
 
-public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentable>: View {
 
-    private enum SelectionMode {
-        case single(
-            selection: Binding<T>,
-            onSelectionChange: ((T) -> Void)?,
-            completion: (() -> Void)?
-        )
-        case multiple(
-            selection: Binding<[T]>,
-            onSelectionChange: (([T]) -> Void)?,
-            completion: (() -> Void)?
-        )
-    }
-
+public struct OnboardingQuizView<T: Identifiable & Equatable & CaseIterable & TitleRepresentable>: View {
+    
     let backgroundColor: Color?
     let question: OnboardingQuizQuestion<T>
     let showSkipButton: Bool
     var hint: OnboardingQuizHint? = nil
     var preContinueAction: (@escaping () -> Void) -> ()
-    private let selectionMode: SelectionMode
-
+    var completion: ((T?) -> Void)?
+    var onSelectionChange: ((T) -> Void)?
+    @State private var selection: T
+    
     public init(
         backgroundColor: Color? = nil,
         question: OnboardingQuizQuestion<T>,
-        selection: Binding<T>,
         showSkipButton: Bool = false,
         hint: OnboardingQuizHint? = nil,
         preContinueAction: @escaping (@escaping () -> Void) -> (),
         onSelectionChange: ((T) -> Void)? = nil,
-        completion: (() -> Void)? = nil
+        completion: ((T?) -> Void)? = nil
     ) {
         self.backgroundColor = backgroundColor
         self.question = question
         self.showSkipButton = showSkipButton
         self.hint = hint
         self.preContinueAction = preContinueAction
-        self.selectionMode = .single(
-            selection: selection,
-            onSelectionChange: onSelectionChange,
-            completion: completion
-        )
+        self.onSelectionChange = onSelectionChange
+        self.completion = completion
+        self._selection = State(initialValue: question.defaultAnswer)
     }
-
-    public init(
-        backgroundColor: Color? = nil,
-        question: OnboardingQuizQuestion<T>,
-        selection: Binding<[T]>,
-        showSkipButton: Bool = false,
-        hint: OnboardingQuizHint? = nil,
-        preContinueAction: @escaping (@escaping () -> Void) -> (),
-        onSelectionChange: (([T]) -> Void)? = nil,
-        completion: (() -> Void)? = nil
-    ) {
-        self.backgroundColor = backgroundColor
-        self.question = question
-        self.showSkipButton = showSkipButton
-        self.hint = hint
-        self.preContinueAction = preContinueAction
-        self.selectionMode = .multiple(
-            selection: selection,
-            onSelectionChange: onSelectionChange,
-            completion: completion
-        )
-    }
-
+    
     public var body: some View {
         ZStack(alignment: .center) {
-
+            
             if let backgroundColor {
                 backgroundColor
                     .ignoresSafeArea()
@@ -128,15 +96,19 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentabl
                 .padding(.horizontal)
             }
             .scrollIndicators(.hidden)
-
+            
             actionLayer
+//                .ignoresSafeArea()
+        }
+        .onChange(of: selection) { _, newValue in
+            onSelectionChange?(newValue)
         }
         .toolbar(.hidden)
     }
-
+    
     private var header: some View {
         VStack(alignment: .leading, spacing: 24) {
-
+            
             Text(question.title)
                 .font(.largeTitle.bold())
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -145,94 +117,40 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentabl
                     .opacity(Opacity.textQuiet)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-
+            
         }
         .font(.title3)
     }
-
-    @ViewBuilder
+    
     private var picker: some View {
-        switch selectionMode {
-        case .single:
-            singlePicker
-        case .multiple:
-            multiplePicker
-        }
-    }
-
-    private var singlePicker: some View {
         CardPicker(
-            selection: singleSelectionBinding,
+            selection: $selection,
             direction: .vertical,
             options: question.options,
             hideLabels: true
         ) { option in
-            quizOptionContent(for: option)
+            ZStack {
+                Color.secondary.opacity(0.24)
+                HStack {
+                    Spacer()
+                    Text(option.title)
+                        .foregroundStyle(Color.primary)
+                        .fontWeight(.semibold)
+                    Spacer()
+                }
+            }
+            .frame(height: 56)
         } onDoubleSelect: {
             proceed()
         }
     }
-
-    private var multiplePicker: some View {
-        VStack(spacing: 16) {
-            ForEach(question.options) { option in
-                multipleOptionCard(for: option)
-                    .buttonWrapped {
-                        withAnimation {
-                            toggleMultipleSelection(for: option)
-                        }
-                    }
-            }
-        }
-    }
-
-    private func multipleOptionCard(for option: T) -> some View {
-        let isSelected = selectedMultipleOptions.contains(option)
-        let scaleEffect: CGFloat = isSelected ? 1.025 : 0.975
-        let opacityEffect: CGFloat = isSelected ? 1 : 0.75
-
-        return ZStack {
-            quizOptionContent(for: option)
-                .clipShape(
-                    RoundedRectangle(
-                        cornerRadius: 20 - 6 / 2
-                    )
-                )
-                .padding(6)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            isSelected ? Color.accentColor : .clear,
-                            lineWidth: 3
-                        )
-                        .padding(1.5)
-                )
-        }
-        .scaleEffect(scaleEffect)
-        .opacity(opacityEffect)
-    }
-
-    private func quizOptionContent(for option: T) -> some View {
-        ZStack {
-            Color.secondary.opacity(0.24)
-            HStack {
-                Spacer()
-                Text(option.title)
-                    .foregroundStyle(Color.primary)
-                    .fontWeight(.semibold)
-                Spacer()
-            }
-        }
-        .frame(height: 56)
-    }
-
+    
     @ViewBuilder
     private var continueButton: some View {
         continueButtonBase
             .glassOrBorderedProminent()
-            .opacityDisabled(!canProceed)
     }
-
+    
     private var continueButtonBase: some View {
         Button {
             proceed()
@@ -245,13 +163,13 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentabl
             .frame(height: 42)
         }
     }
-
+    
     @ViewBuilder
     private var skipButton: some View {
         skipButtonBase
             .glassOrBordered()
     }
-
+    
     private var skipButtonBase: some View {
         Button {
             proceed()
@@ -264,7 +182,14 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentabl
             .frame(height: 42)
         }
     }
-
+    
+    private var blurLayer: some View {
+        VStack {
+            Spacer()
+            progressiveBlurView
+        }
+    }
+    
     private var actionLayer: some View {
         VStack {
             Spacer()
@@ -285,7 +210,7 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentabl
             )
         }
     }
-
+    
     private func hintView(_ hint: OnboardingQuizHint) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
@@ -306,7 +231,7 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentabl
         .padding(10)
         .glassCapsuleBackground()
     }
-
+    
     private var progressiveBlurView: some View {
         Rectangle()
             .fill(.ultraThinMaterial)
@@ -324,64 +249,10 @@ public struct OnboardingQuizView<T: Identifiable & Equatable & TitleRepresentabl
                 }
             }
     }
-
-    private var singleSelectionBinding: Binding<T> {
-        switch selectionMode {
-        case let .single(selection, onSelectionChange, _):
-            return Binding {
-                selection.wrappedValue
-            } set: { newValue in
-                selection.wrappedValue = newValue
-                onSelectionChange?(newValue)
-            }
-        case .multiple:
-            fatalError("Attempted to read single selection binding in multiple mode.")
-        }
-    }
-
-    private var selectedMultipleOptions: [T] {
-        switch selectionMode {
-        case let .multiple(selection, _, _):
-            return selection.wrappedValue
-        case .single:
-            return []
-        }
-    }
-
-    private var canProceed: Bool {
-        switch selectionMode {
-        case .single:
-            return true
-        case .multiple:
-            return !selectedMultipleOptions.isEmpty
-        }
-    }
-
-    private func toggleMultipleSelection(for option: T) {
-        guard case let .multiple(selection, onSelectionChange, _) = selectionMode else {
-            return
-        }
-        var updated = selection.wrappedValue
-        if let index = updated.firstIndex(of: option) {
-            updated.remove(at: index)
-        } else {
-            updated.append(option)
-        }
-        selection.wrappedValue = updated
-        onSelectionChange?(updated)
-    }
-
+    
     private func proceed() {
-        guard canProceed || showSkipButton else {
-            return
-        }
         preContinueAction {
-            switch selectionMode {
-            case let .single(_, _, completion):
-                completion?()
-            case let .multiple(_, _, completion):
-                completion?()
-            }
+            completion?(selection)
         }
     }
 }
@@ -390,31 +261,23 @@ fileprivate enum QuizOptionExample: String, CaseIterable, Identifiable, TitleRep
     case one
     case two
     case three
-
+    
     var id: String { rawValue }
-
+    
     var title: String { rawValue.capitalized }
 }
 
-fileprivate struct OnboardingQuizViewPreview: View {
-    @State private var selection: [QuizOptionExample] = [.one]
-
-    var body: some View {
-        OnboardingQuizView(
-            question: .init(
-                title: "Pick your swing speed",
-                description: "Tempo Town will recommend the best tempo for you.",
-                options: QuizOptionExample.allCases
-            ),
-            selection: $selection,
-            showSkipButton: true,
-            hint: .init(text: "You can change this later in Settings"),
-            preContinueAction: { _ in }
-        )
-        .preferredColorScheme(.dark)
-    }
-}
-
 #Preview {
-    OnboardingQuizViewPreview()
+    OnboardingQuizView(
+        question: .init(
+            title: "Pick your swing speed",
+            description: "Tempo Town will recommend the best tempo for you.",
+            options: QuizOptionExample.allCases
+        ),
+        showSkipButton: true,
+        hint: .init(text: "You can change this later in Settings"),
+        preContinueAction: { _ in }
+    )
+    .preferredColorScheme(.dark)
 }
+
